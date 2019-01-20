@@ -1,0 +1,111 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!181963792 &2655988077585873504
+Preset:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: AbsSinNoise
+  m_TargetType:
+    m_NativeTypeID: 114
+    m_ManagedTypePPtr: {fileID: 11500000, guid: 62b54312110bdb148bebbe4c753dc28e,
+      type: 3}
+    m_ManagedTypeFallback: 
+  m_Properties:
+  - target: {fileID: 0}
+    propertyPath: m_Enabled
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: m_EditorHideFlags
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: m_EditorClassIdentifier
+    value: 
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: _MainAngle
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: _DirectionSpan
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: _Steepness
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: _Waves.Array.size
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: _Waves.Array.data[0].Height
+    value: 15
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: _Waves.Array.data[0].Width
+    value: 30
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: _Waves.Array.data[0].Speed
+    value: 80
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: _Waves.Array.data[0].Angle
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: _Waves.Array.data[1].Height
+    value: 13.5
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: _Waves.Array.data[1].Width
+    value: 33
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: _Waves.Array.data[1].Speed
+    value: 90
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: _Waves.Array.data[1].Angle
+    value: 5
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: _Waves.Array.data[2].Height
+    value: 12.15
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: _Waves.Array.data[2].Width
+    value: 36.3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: _Waves.Array.data[2].Speed
+    value: 100
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: _Waves.Array.data[2].Angle
+    value: -3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: _Waves.Array.data[3].Height
+    value: 10.935
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: _Waves.Array.data[3].Width
+    value: 39.93
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: _Waves.Array.data[3].Speed
+    value: 130
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: _Waves.Array.data[3].Angle
+    value: 5
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: Trochoid
+    value: 
+    objectReference: {fileID: 2100000, guid: f44f3c56969050d44b60acf660f439a0, type: 2}

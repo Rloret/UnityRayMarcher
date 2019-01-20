@@ -66,10 +66,10 @@ public class waveController : MonoBehaviour {
        // UpdateWavesInShader();
     }
 
-    private void OnValidate()
-    {
-        UpdateWavesInShader();
-    }
+   private void OnValidate()
+   {
+    if(waveBuffer!=null)   UpdateWavesInShader();
+   }
 
 
     void UpdateWavesInShader()

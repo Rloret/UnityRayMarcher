@@ -51,7 +51,7 @@ float3 getRayPoint(Ray r, float t)
 }
 
 float sdSphere(float3 samplePoint) {
-	return length(samplePoint) - 200;
+	return length(samplePoint) -200;
 }
 float sdPlane(float3 P, float3 N)
 {
@@ -68,7 +68,7 @@ float sdTorus(float3 p, float2 t)
 } 
 
 float sdWave(float3 p) {
-	float height = /*F0_z(p,(int)_AuxValue); //*/F_z(p );
+	float height = F_z(p);//F0_z(p, (int)_AuxValue);// F_z(p);// F0_z(p, (int)_AuxValue); +
 	return p.y - height;
 }
 
@@ -89,9 +89,11 @@ float opSmoothIntersection(float d1, float d2, float k) {
 float mapScene(float3 p) {
 	//return sdfSphere(p+ float3(0,0, _AuxValue));
 	float wDist = sdWave(p);
-	float sDist = sdSphere(p+ float3(0, _SinTime.w*200,0));
-
-	return opSmoothUnion(sDist, wDist,_AuxValue);
+	
+	float sDist = sdSphere(p+sin(_Time[2]/10)*float3(0,500,0));
+	//return sDist;
+	//return opSmoothUnion(sDist, wDist,100);
+	return wDist;
 }
 float marchScene(Ray r,half MaxSteps,half EPSILON,out int steps) {
 	float currDist = Near;
@@ -110,6 +112,104 @@ float marchScene(Ray r,half MaxSteps,half EPSILON,out int steps) {
 	}
 	return currDist;
 }
+float planeIntersection(Ray r, float3 N) {
+	float denom = dot(r.d, N);
+	if (denom == 0) {
+		return Far;
+
+	}
+	else {
+		return -(dot(r.o, N) ) / denom;
+
+	}
+}
+
+float marchSceneBisection(Ray r, half MaxSteps, half EPSILON, out int steps) {
+	float currDist = Near;
+	float farDist =Far;
+	float h_a = mapScene(getRayPoint(r,currDist));
+	float h_b = mapScene(getRayPoint(r, farDist));
+
+
+	
+	//if (h_a*h_b > 0) return Far;
+
+	while (steps < MaxSteps)
+	{
+		steps++;
+		float middleDist = (farDist + currDist)*0.5;
+		float h_c = mapScene(getRayPoint(r, middleDist));
+		if (abs(h_c) < EPSILON)return middleDist;
+		
+		if (h_c > 0) currDist = middleDist;
+		else		 farDist = middleDist;
+
+	}
+	
+	return Far;
+}
+
+
+float marchSceneSecant(Ray r, half MaxSteps, half EPSILON, out int steps) {
+	float x0 = Near;
+	float x1 = Far;//planeIntersection(r, float3(0, 1, 0));
+	float h_x0 = mapScene(getRayPoint(r, x0));
+	float h_x1 = mapScene(getRayPoint(r, x1));
+	if (abs(h_x0) < abs(h_x1)) {
+		double aux = x0;
+		x0 = x1;
+		x1 = aux;
+	}
+
+	float x2=0;
+//	if (h_a*h_b > 0) return Far;
+
+	while (steps < MaxSteps)
+	{
+		steps++;
+
+		h_x0 = mapScene(getRayPoint(r, x0));
+		h_x1 = mapScene(getRayPoint(r, x1));
+
+		x2 = x1 - (h_x1*(x0 - x1) / (h_x0 - h_x1));
+		x0 = x1;
+		x1 = x2;
+		if (abs(mapScene(getRayPoint(r, x1))) < EPSILON) {
+			return x1;
+		}
+
+	}
+
+	return Far;
+}
+
+
+
+float marchSceneLerpSort(Ray r, half MaxSteps, half EPSILON, out int steps) {
+	float tm = Near;
+	float tx = Far;
+	float hx = mapScene(getRayPoint(r, tx));
+	if (hx > 0.0) return tx;
+	float hm = mapScene(getRayPoint(r, tm));
+	float tmid = 0.0;
+	for (int i = 0; i < MaxSteps; i++) {
+		tmid = lerp(tm, tx, hm / (hm - hx));
+		steps++;
+		float3 p = getRayPoint(r, tmid);
+		float hmid = mapScene(p);
+		if (hmid < 0.0) {
+			tx = tmid;
+			hx = hmid;
+		}
+		else {
+			tm = tmid;
+			hm = hmid;
+		}
+	}
+	return tmid;
+}
+
+
 //float march(Ray r, half MaxSteps, half MaxDistance, half EPSILON) {
 //	float depth = 0;
 //	for (int i = 0; i < MaxSteps; i++) {

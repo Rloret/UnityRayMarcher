@@ -13,11 +13,12 @@ struct wave {
 StructuredBuffer<wave> waveBuffer;
 
 uniform int _NumWaves;
-float _Steepness = 1;
+float _Steepness = 0.4;
+float _NoiseAmplitude=10;
 
 float3 getWavePosition(in float3 gridPosition, int waveNumber);
-float getAbsWavePosition(in float3 gridPosition, int waveNumber,float sign);
-float getAbsWavePosition(in float3 gridPosition);
+float getAbsWavePosition(float2 gridPosition, int waveNumber,float sign);
+float getAbsWavePosition(float2 gridPosition);
 
 float3 computeDisplacementForPoint(float3 p) {
 	float3 finalPosition = float3(0, 0, 0);
@@ -32,6 +33,11 @@ float hash(float2 p) {
 	float h = dot(p, float2(127.1, 311.7));
 	return frac(sin(h)*43758.5453123);
 }
+float hash(float n)
+{
+	return frac(cos(n)*41415.92653);
+}
+
 float noise(in float2 p) {
 	float2 i = floor(p);
 	float2 f = frac(p);
@@ -45,15 +51,25 @@ float noise(in float2 p) {
 			u.x),
 		u.y);
 }
+
+float noise(in float3 x)
+{
+	float3 p = floor(x);
+	float3 f = smoothstep(0.0, 1.0, frac(x));
+	float n = p.x + p.y*57.0 + 113.0*p.z;
+
+	return lerp(lerp(lerp(hash(n + 0.0), hash(n + 1.0), f.x),
+		   lerp(hash(n + 57.0), hash(n + 58.0), f.x), f.y),
+		   lerp(lerp(hash(n + 113.0), hash(n + 114.0), f.x),
+			   lerp(hash(n + 170.0), hash(n + 171.0), f.x), f.y), f.z);
+}
 float F_z(float3 p) {
 	float finalPosition = 0;
 	float2x2 octave_m = float2x2(1.6, 1.2, -1.2, 1.6);
 	float2  uv = p.xz;
 	for (int j = 0; j < _NumWaves; j++)
 	{
-		uv =mul( octave_m,uv);
-		finalPosition += getAbsWavePosition(float3(uv.x,p.y,uv.y), j,1);
-		
+		finalPosition += getAbsWavePosition(uv.xy, j,1);
 	}
 	finalPosition /= _NumWaves;
 	return finalPosition;
@@ -67,24 +83,49 @@ float F0_z(float3 p,int numwaves) {
 	float k = PI2 / w.W;
 	float a = w.H;
 	float v = w.V;
-	float3 uv = p.xxz;
+	float2 uv = p.xz;
 	float2x2 octave_m = float2x2(1.6, 1.2, -1.2, 1.6);
 
 
 	for (int j = 0; j < numwaves; j++)
 	{
-		
-		finalPosition = getAbsWavePosition(k*(uv+_Time*v));
-		finalPosition += getAbsWavePosition(k*(uv - _Time*v));
+		//uv += mul(octave_m, uv);
+		finalPosition = getAbsWavePosition(k*(uv - _Time[2] * v));
+		finalPosition += getAbsWavePosition(k*(uv - _Time[2]*v));
 		h += finalPosition*a;
-		k *= 1.4;
-		a *= 0.22;
+		k *= 1.9;
+		a *= 0.9;
 		v*=1.2;
 	}
-	finalPosition /= _NumWaves * 2;
+	h /= _NumWaves*2 ;
 	return h;
 }
+float3x3 m = float3x3(0.00, 1.60, 1.20, -1.60, 0.72, -0.96, -1.20, -0.96, 1.28);
 
+// Fractional Brownian motion
+float fbm(float3 p)
+{
+	float f = 0.5000*noise(p); p = mul(m,p*1.1);
+	f += 0.2500*noise(p); p = mul(m,p*1.2);
+	f += 0.1666*noise(p); p = mul(m,p);
+	f += 0.0834*noise(p);
+	return f;
+}
+
+float2x2 m2 = float2x2(1.6, -1.2, 1.2, 1.6);
+
+// Fractional Brownian motion
+float fbm(float2 p)
+{
+	float f = 0.5000*noise(p); p = mul(m2,p);
+	f += 0.2500*noise(p); p = mul(m2,p);
+	f += 0.1666*noise(p); p = mul(m2,p);
+	f += 0.0834*noise(p);
+	return f;
+}
+
+
+/*
 float3 getWavePosition(in float3 gridPosition, int waveNumber) {
 	
 	wave w = waveBuffer[waveNumber];
@@ -101,23 +142,24 @@ float3 getWavePosition(in float3 gridPosition, int waveNumber) {
 	return wavePosition;
 
 }
-
-float getAbsWavePosition(in float3 gridPosition, int waveNumber,float s) {
+*/
+float getAbsWavePosition(float2 gridPosition, int waveNumber,float s) {
 	wave w = waveBuffer[waveNumber];
 	
 	float2 D = normalize(float2(cos(w.angle *PI / 180.0), sin(w.angle * PI / 180.0)));
 	float k = PI2 / w.W;
-	float3 distgridp = gridPosition + pow(w.H,2)*(sqrt(2)/2 -abs(noise(gridPosition.xz *k/10- _Time[2]*k)));
+	float kNoise = PI2 / (w.W*_NoiseAmplitude);
+	float2 griddistort = gridPosition;
 
-	float inTrig = dot(k*D, distgridp.xz) *k+ w.V *_Time*s;
-	return w.H - abs(w.H*sin(inTrig));
-	//return 10- abs(10*sin(gridPosition.x/10));
+	float inTrig = (dot(k*D, griddistort) + noise(gridPosition*kNoise)) *k+ w.V *_Time*s;
+	return w.H - abs(w.H*(sin(inTrig)));
+
 }
 
-float getAbsWavePosition(in float3 gridPosition) {
+float getAbsWavePosition(float2 gridPosition) {
 
-	gridPosition += noise(gridPosition.xz);
-	float2 D = normalize(float2(cos(gridPosition.x *PI / 180.0), sin(gridPosition.x * PI / 180.0)));
+	gridPosition += float2(noise(gridPosition.xy),noise(gridPosition.yx));
+	//float2 D = normalize(float2(cos(gridPosition.x *PI / 180.0), sin(gridPosition.y * PI / 180.0)));
 	float2 wv = 1.0 - abs(sin(gridPosition));
 	float2 swv = abs(cos(gridPosition));
 	wv = lerp(wv, swv, wv);
