@@ -1,6 +1,7 @@
 ﻿
 uniform float _AuxValue;
 
+
 struct Ray {
 	float3 o;
 	float3 d;
@@ -50,8 +51,8 @@ float3 getRayPoint(Ray r, float t)
 	return r.o + r.d*t;
 }
 
-float sdSphere(float3 samplePoint) {
-	return length(samplePoint) -200;
+float sdSphere(float3 samplePoint,float r) {
+	return (length(samplePoint) - r);
 }
 float sdPlane(float3 P, float3 N)
 {
@@ -86,14 +87,42 @@ float opSmoothIntersection(float d1, float d2, float k) {
 	float h = clamp(0.5 - 0.5*(d2 - d1) / k, 0.0, 1.0);
 	return lerp(d2, d1, h) + k * h*(1.0 - h);
 }
+
+float opIntersection(float d1, float d2) { return max(d1, d2); }
+
+// Repeat around the origin by a fixed angle.
+// For easier use, num of repetitions is use to specify the angle.
+float opModPolar(inout float2 p, float repetitions) {
+	float angle = 2 * PI / repetitions;
+	float a = atan2(p.y, p.x) + angle / 2.;
+	float r = length(p);
+	float c = floor(a / angle);
+	a = fmod(a, angle) - angle / 2.;
+	p = float2(cos(a), sin(a))*r;
+	// For an odd number of repetitions, fix cell index of the cell in -x direction
+	// (cell index would be e.g. -5 and 5 in the two halves of the cell):
+	if (abs(c) >= (repetitions / 2)) c = abs(c);
+	return c;
+}
+
+float3 opRep( float3 p,float3 c)
+{
+	float3 q = fmod(p, c) - 0.5*c;
+	return q;
+}
 float mapScene(float3 p) {
 	//return sdfSphere(p+ float3(0,0, _AuxValue));
 	float wDist = sdWave(p);
 	
-	float sDist = sdSphere(p+sin(_Time[2]/10)*float3(0,500,0));
-	//return sDist;
-	//return opSmoothUnion(sDist, wDist,100);
-	return wDist;
+	float sDist = sdSphere(p+float3(0,0,-30),400);
+
+	float seaSphere = opSmoothIntersection(sDist, wDist, _AuxValue); 
+		float3 c = float3(100, 50, 50);
+		float3 p_0 = fmod(p+float3(0,_Time[2],0), c) -0.5*c;
+	
+	float spheres = sdSphere(float3(p_0.x,p_0.y,p_0.z),1);
+	return spheres;
+	//return wDist;
 }
 float marchScene(Ray r,half MaxSteps,half EPSILON,out int steps) {
 	float currDist = Near;
@@ -127,12 +156,13 @@ float planeIntersection(Ray r, float3 N) {
 float marchSceneBisection(Ray r, half MaxSteps, half EPSILON, out int steps) {
 	float currDist = Near;
 	float farDist =Far;
+	float3 farpoint = getRayPoint(r, farDist);
 	float h_a = mapScene(getRayPoint(r,currDist));
-	float h_b = mapScene(getRayPoint(r, farDist));
+	float h_b = mapScene(farpoint);
 
 
 	
-	//if (h_a*h_b > 0) return Far;
+	if ( farpoint.y>100 ||h_a*h_b > 0) return Far;
 
 	while (steps < MaxSteps)
 	{
@@ -152,17 +182,16 @@ float marchSceneBisection(Ray r, half MaxSteps, half EPSILON, out int steps) {
 
 float marchSceneSecant(Ray r, half MaxSteps, half EPSILON, out int steps) {
 	float x0 = Near;
-	float x1 = Far;//planeIntersection(r, float3(0, 1, 0));
+	float x1 = planeIntersection(r, float3(0, 1, 0));
+
+	float3 farpoint = getRayPoint(r, x1);
 	float h_x0 = mapScene(getRayPoint(r, x0));
 	float h_x1 = mapScene(getRayPoint(r, x1));
-	if (abs(h_x0) < abs(h_x1)) {
-		double aux = x0;
-		x0 = x1;
-		x1 = aux;
-	}
+
+	
 
 	float x2=0;
-//	if (h_a*h_b > 0) return Far;
+	if (farpoint.y>100 || h_x0*h_x1 > 0) return Far;
 
 	while (steps < MaxSteps)
 	{
@@ -171,7 +200,7 @@ float marchSceneSecant(Ray r, half MaxSteps, half EPSILON, out int steps) {
 		h_x0 = mapScene(getRayPoint(r, x0));
 		h_x1 = mapScene(getRayPoint(r, x1));
 
-		x2 = x1 - (h_x1*(x0 - x1) / (h_x0 - h_x1));
+		x2 = x1 - ((h_x1*(x1 - x0)) / (h_x1 - h_x0));
 		x0 = x1;
 		x1 = x2;
 		if (abs(mapScene(getRayPoint(r, x1))) < EPSILON) {

@@ -9,7 +9,7 @@ public enum RaymarchType
 
 public enum DebugRender
 {
-    CONVERGENCE,NORMALS, LIGHTING,DISTANCE
+    CONVERGENCE,NORMALS, LIGHTING,DISTANCE,ALL
 }
 public class FullScreenQuadGUI : ShaderGUI {
 

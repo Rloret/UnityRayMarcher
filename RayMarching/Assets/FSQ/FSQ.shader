@@ -11,8 +11,12 @@ Shader "RayMarching/FSQ" {
 		_Epsilon("MarchDistance", Range(0,1)) = 0.1
 		_MaxMarchingSteps("Max marching steps", Range(0,255)) = 100
 		
-		_AuxValue("Aux",Range(1,10) )= 0
+		_AuxValue("Aux",Range(1,300) )= 0
 		_NoiseAmplitude("NoiseAmplitude",Range(1,100)) = 0
+
+	
+	
+	
 
 	}
 	SubShader{
@@ -31,7 +35,7 @@ Shader "RayMarching/FSQ" {
 		#define O _WorldSpaceCameraPos.xyz
 
 	
-		#include "TrochoidWaves.cginc"
+		#include "Assets/GerstnerWaves/TrochoidWaves.cginc"
 		#include "SDFUtility.cginc"
 
 		#include "UnityStandardBRDF.cginc"
@@ -48,6 +52,8 @@ Shader "RayMarching/FSQ" {
 		#pragma shader_feature NORMALS
 		#pragma shader_feature DISTANCE
 	    #pragma shader_feature CONVERGENCE
+#pragma shader_feature LIGHTING
+#pragma shader_feature ALL
 
 
 		struct vertInput
@@ -129,14 +135,15 @@ Shader "RayMarching/FSQ" {
 #elif defined(DISTANCE)
 			float3 d = (dist-Near)/(Far-Near);
 			Out.col = float4(d, 1);
-#else
+#elif defined(LIGHTING)
 		
 			float3 L = _WorldSpaceLightPos0.xyz;
-			float3 N = estimateNormal(p, _Epsilon);
+			float3 percD = (dist - Near) / (Far - Near);
+			float3 N = estimateNormal(p, _Epsilon/(1-percD));
 			float lambert = pow(DotClamped(L, N) * 0.4 + 0.6, 80);
 			float3 viewDir = normalize(_WorldSpaceCameraPos - p);
 			float fresnel = clamp(1.0 - dot(N, viewDir), 0.0, 1.0);
-			fresnel = pow(fresnel, 2.0);
+			fresnel = pow(fresnel, 4.9);
 			float3 reflectionDir = reflect(-L, N);
 			float4 envSample = UNITY_SAMPLE_TEXCUBE(unity_SpecCube0, N);
 			float3 specular = DecodeHDR(envSample, unity_SpecCube0_HDR).xyz;
@@ -144,7 +151,34 @@ Shader "RayMarching/FSQ" {
 			float3 refracted = _Sea_Base + lambert * _Sea_Water * 0.12;
 			Out.col = float4(lerp(refracted, specular, fresnel),1);
 			
-		
+#else
+			if (IN.UV.x < 0.5*0.33) {
+				float3 N = estimateNormal(p, _Epsilon);
+				Out.col = float4(N, 1);
+			}
+			else if (IN.UV.x < 0.5*0.66) {
+				float3 convergence = steps / _MaxMarchingSteps;
+				Out.col = float4(convergence, 1);
+			}
+			else if (IN.UV.x < 0.5*0.99) {
+				float3 d = (dist - Near) / (Far - Near);
+				Out.col = float4(d, 1);
+			}
+			else {
+				float3 L = _WorldSpaceLightPos0.xyz;
+				float3 percD = (dist - Near) / (Far - Near);
+				float3 N = estimateNormal(p, _Epsilon / (1 - percD));
+				float lambert = pow(DotClamped(L, N) * 0.4 + 0.6, 80);
+				float3 viewDir = normalize(_WorldSpaceCameraPos - p);
+				float fresnel = clamp(1.0 - dot(N, viewDir), 0.0, 1.0);
+				fresnel = pow(fresnel, _AuxValue);
+				float3 reflectionDir = reflect(-L, N);
+				float4 envSample = UNITY_SAMPLE_TEXCUBE(unity_SpecCube0, N);
+				float3 specular = DecodeHDR(envSample, unity_SpecCube0_HDR).xyz;
+
+				float3 refracted = _Sea_Base + lambert * _Sea_Water * 0.12;
+				Out.col = float4(lerp(refracted, specular, fresnel), 1);
+			}
 #endif
 			
 

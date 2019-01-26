@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: FSQMat
   m_Shader: {fileID: 4800000, guid: ce3fd5033230af742929ec1df7b8697c, type: 3}
-  m_ShaderKeywords: LIGHTING USE_SHADERTOY VANILLA_RAYMARCH
+  m_ShaderKeywords: DISTANCE USE_SHADERTOY VANILLA_RAYMARCH
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -20,10 +20,10 @@ Material:
     serializedVersion: 3
     m_TexEnvs: []
     m_Floats:
-    - _AuxValue: 4.92
-    - _Epsilon: 0.01
+    - _AuxValue: 47
+    - _Epsilon: 0.409
     - _LazyRayMarch: 0
-    - _MaxMarchingSteps: 203
+    - _MaxMarchingSteps: 58
     - _NoiseAmplitude: 2.2
     m_Colors:
     - _Sea_Base: {r: 0.12086151, g: 0.2259404, b: 0.26415092, a: 1}
