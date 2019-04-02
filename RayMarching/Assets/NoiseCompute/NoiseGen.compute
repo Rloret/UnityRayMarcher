@@ -1,0 +1,25 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel Worley
+
+#include "Assets/_CGIncludes/NoiseUtility.cginc"
+RWTexture3D<float4> worleyBuff;
+
+#define threadblockSize 8
+
+//#define index globalId.y * imageDimensions + globalId.x
+[numthreads(threadblockSize, threadblockSize, threadblockSize)]
+void Worley (uint3 globalId : SV_DispatchThreadID)
+{
+
+	float cellCount = 4.0;
+	float3 coord = globalId /1000.0;
+	//float worleyN0 = (1.0 - tileableworley(coord, cellCount * 1));
+	float worleyN1 = (1.0 - tileableworley(coord, cellCount * 2));
+	float worleyN2 = (1.0 - tileableworley(coord, cellCount * 8));
+	float worleyN3 = (1.0 - tileableworley(coord, cellCount * 16));
+
+	float worleyFBM = worleyN1*0.525f + worleyN2*0.3f + worleyN3*0.175f;
+	worleyFBM = worleyFBM * 2. - 1;
+	worleyFBM = pow(worleyFBM, 2.0);
+	worleyBuff[globalId.xyz] = worleyFBM;// float4(id.x / 512.0, 1, 1, 1);
+}

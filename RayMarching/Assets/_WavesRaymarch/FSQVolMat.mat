@@ -9,22 +9,32 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: FSQVolMat
   m_Shader: {fileID: 4800000, guid: 3f475394702b0c44aa266d4f63ab514d, type: 3}
-  m_ShaderKeywords: ALL USE_SHADERTOY VANILLA_RAYMARCH
+  m_ShaderKeywords: LIGHTING USE_SHADERTOY VANILLA_RAYMARCH
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 3000
+  m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
   m_SavedProperties:
     serializedVersion: 3
-    m_TexEnvs: []
+    m_TexEnvs:
+    - _CloudNoise:
+        m_Texture: {fileID: 8400000, guid: 3cbf3998b2be97242bc07d6a219db7d9, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _AuxValue: 75
-    - _Epsilon: 0.12
+    - _AValue: 0.54
+    - _Aux: 8.14
+    - _AuxValue: 80
+    - _Epsilon: 0.01
+    - _FValue: 11
     - _LazyRayMarch: 0
     - _MaxMarchingSteps: 255
-    - _NoiseAmplitude: 3
+    - _Mix: 0.9501
+    - _NoiseAmplitude: 22
+    - _SLac: 0.4
+    - _WLac: 0.49
     m_Colors:
     - _Sea_Base: {r: 0.12086151, g: 0.2259404, b: 0.26415092, a: 1}
     - _Sea_Water: {r: 0.75543916, g: 0.9019608, b: 0.6, a: 1}

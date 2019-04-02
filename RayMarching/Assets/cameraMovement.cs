@@ -73,10 +73,10 @@ public class cameraMovement : MonoBehaviour {
                     {
                         Vector3 p =O+D*currd;
                         Gizmos.color = new Color(0.1f, 0f, 0, 0.1f);
-                        Gizmos.DrawSphere(p, 0.1f);
+                       // Gizmos.DrawSphere(p, 0.1f);
                         //Gizmos.DrawSphere(p, 0.1f);
-                        currd += mapScene(p,z,farz) *0.9f;
-                        if (currd < 0) break;
+                        currd += mapScene(p,z,farz) ;
+                        if (currd < 0.01) break;
                        
                        
                     }
@@ -87,9 +87,11 @@ public class cameraMovement : MonoBehaviour {
         }
     }
 
+    Vector2 torus = new Vector2(20, .8f);
     float mapScene(Vector3 p,float near,float far)
     {
-        return sdfSphere(p,near,far);
+        return sdTorus(p, torus);
+       // return sdfSphere(p,near,far);
       // return sampleWave(p,near,far);
     }
 
@@ -108,10 +110,41 @@ public class cameraMovement : MonoBehaviour {
             return d;
         }
 
-
-
         return d;
 
+    }
+
+    float sdTorus(Vector3 p, Vector3 t)
+    {
+        Vector2 q = new Vector2 ((new Vector2(p.x,p.z)).magnitude - t.x, p.y);
+        float d = (q).magnitude - t.y;
+
+        if (d < 0.01)
+        {
+
+
+            Vector3 D = (p);
+            Vector3 projDN = (Vector3.Dot(D, Vector3.up)) * Vector3.up;
+
+            Vector3 cRight = (D -projDN).normalized;
+            Vector3 tempUp = Vector3.up ;
+
+
+            Vector3 lRight = (D).normalized;
+
+            Vector3 c = cRight * (torus.x + torus.y * 0.5f);
+            Gizmos.DrawCube(c, Vector3.one * 0.1f);
+
+            Vector3 v = p - c;
+            Vector3 f = Vector3.Cross(v, cRight).normalized;
+            Gizmos.color = Color.red *Vector3.Dot(f, tempUp); ;
+            Gizmos.DrawLine(p, p + f.normalized);
+            Gizmos.color = new Color(0.0f, 0.1f, 0, 0.1f);
+            Gizmos.DrawSphere(p,0.1f);
+          
+            
+        }
+        return d;
     }
     float sampleWave(Vector3 p,float near,float far)
     {

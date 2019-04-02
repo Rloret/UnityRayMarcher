@@ -7,11 +7,6 @@ struct Ray {
 	float3 d;
 };
 
-struct HitInformation {
-	half radius;
-	half distance;
-	half3 normal;
-};
 
 Ray initRay(float3 o, float3 D) {
 	Ray r;
@@ -39,6 +34,7 @@ float3 getWorldUV(float2 uv)
 	m_pixels.x *= nearDims.x;
 	m_pixels.y *= nearDims.y;
 	
+	//R- right U-Up F-Forward basis vectors of the camera.
 	m_pixels.xyz =  m_pixels.x * normalize(R) + normalize(U) * m_pixels.y + normalize(-F) * m_pixels.z;
 
 
@@ -156,6 +152,8 @@ float marchSceneBisection(Ray r, half MaxSteps, half EPSILON, out int steps) {
 	float h_a = mapScene(getRayPoint(r,currDist));
 	float h_b = mapScene(farpoint);
 	steps = 0;
+
+	//march at fixed rate if not possible to guarantee a solution
 	//if ( farpoint.y>100 ||h_a*h_b > 0) return Far;
 	if (sign(h_a) != sign(h_b)) {
 		return marchScene(r, MaxSteps, EPSILON, steps);
@@ -187,8 +185,10 @@ float marchSceneSecant(Ray r, half MaxSteps, half EPSILON, out int steps) {
 	float h_x1 = mapScene(getRayPoint(r, x1));
 
 	
-
+	steps = steps;
 	float x2=0;
+
+	//march normal if cant guarantee a solution
 	//if (farpoint.y>100 || h_x0*h_x1 > 0) return Far;
 	if (sign(h_x0) != sign(h_x1)) {
 		return marchScene(r, MaxSteps, EPSILON, steps);

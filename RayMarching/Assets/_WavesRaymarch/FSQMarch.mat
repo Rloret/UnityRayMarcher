@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: FSQMarch
+  m_Shader: {fileID: 4800000, guid: ce3fd5033230af742929ec1df7b8697c, type: 3}
+  m_ShaderKeywords: LIGHTING USE_SHADERTOY VANILLA_RAYMARCH
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _CloudNoise:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Floats:
+    - _AValue: 0.54
+    - _Aux: 8.14
+    - _AuxValue: 1
+    - _Epsilon: 0.944
+    - _FValue: 11
+    - _LazyRayMarch: 0
+    - _MaxMarchingSteps: 255
+    - _Mix: 0.9501
+    - _NoiseAmplitude: 1.3
+    - _SLac: 0.4
+    - _WLac: 0.49
+    m_Colors:
+    - _Sea_Base: {r: 0.12086151, g: 0.2259404, b: 0.26415092, a: 1}
+    - _Sea_Water: {r: 0.75543916, g: 0.9019608, b: 0.6, a: 1}

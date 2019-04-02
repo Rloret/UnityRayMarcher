@@ -1,5 +1,6 @@
-﻿
-Shader "RayMarching/FSQ_Volume" {
+﻿// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+
+Shader "Waves/RayMarching/FSQ" {
 	
 	Properties{
 
@@ -10,10 +11,7 @@ Shader "RayMarching/FSQ_Volume" {
 		_Epsilon("MarchDistance", Range(0,1)) = 0.1
 		_MaxMarchingSteps("Max marching steps", Range(0,255)) = 100
 
-		_FValue("F",Range(0,100)) = 0
-		_AValue("A",Range(0,1.0)) = 0
-		_AuxValue("AuxValue",Range(1,100)) = 0
-
+		_AuxValue("Aux",Range(1,300)) = 0
 		_NoiseAmplitude("NoiseAmplitude",Range(1,100)) = 0
 
 
@@ -22,7 +20,7 @@ Shader "RayMarching/FSQ_Volume" {
 
 	}
 		SubShader{
-		Tags{ "Queue" = "Transparent" }
+
 			Blend SrcAlpha OneMinusSrcAlpha
 
 			Pass{
@@ -38,8 +36,8 @@ Shader "RayMarching/FSQ_Volume" {
 
 			float mapScene(float3 p);
 
-		#include "Assets/GerstnerWaves/TrochoidWaves.cginc"
-		#include "SDFUtility.cginc"
+		#include "Assets/_CGIncludes/TrochoidWaves.cginc"
+		#include "Assets/_CGIncludes/SDFUtility.cginc"
 
 		#include "UnityStandardBRDF.cginc"
 
@@ -55,8 +53,8 @@ Shader "RayMarching/FSQ_Volume" {
 		#pragma shader_feature NORMALS
 		#pragma shader_feature DISTANCE
 	    #pragma shader_feature CONVERGENCE
-#pragma shader_feature LIGHTING
-#pragma shader_feature ALL
+		#pragma shader_feature LIGHTING
+		#pragma shader_feature ALL
 
 
 		struct vertInput
@@ -93,27 +91,18 @@ Shader "RayMarching/FSQ_Volume" {
 		
 		uniform half _MaxMarchingSteps;
 		uniform float _Epsilon;
-		uniform float _FValue;
-		uniform float _AValue;
 		uniform float4 _Sea_Base;
 		uniform float4	_Sea_Water;
-
 			
 		float mapScene(float3 p) {
 			//return sdfSphere(p+ float3(0,0, _AuxValue));
 			float wDist = sdWave(p);
 
-			float sDist = sdSphere(p + float3(0, 0, -30), 400);
+			float sDist = sdSphere(p + float3(0, 0, -30), 100);
 
-			float seaSphere = opSmoothIntersection(sDist, -wDist, _AuxValue);
-			//float3 c = float3(100, 50, 50);
-			//float3 p_0 = fmod(p + float3(0, _Time[2], 0), c) - 0.5*c;
-
-			//float spheres = sdSphere(float3(p_0.x, p_0.y, p_0.z), 1);
-			
-			float b= sdBox(p , float3(400,100,400));
-			//return b;
-			return sDist;
+			float seaSphere = opSmoothIntersection(sDist, wDist, _AuxValue);
+	
+			return seaSphere;
 		}
 
 		fragOutput frag(fragInput IN) 
@@ -141,60 +130,74 @@ Shader "RayMarching/FSQ_Volume" {
 
 			float3 p = getRayPoint(r, dist);
 
-			int volumeSamples = 100;
-			float accumdist = 0; 
-				int nstps = 64;
-			float stepSize = 400/nstps;
-			int i = 1;
-
-			float4 dst = float4(0, 0, 0, 0);
-			float3 nextp = p;
-			float voro = 0;
-
-
-			while( mapScene(nextp=getRayPoint(r, dist + stepSize*i)) < 0 && i<nstps )
-			{
-				i++;
-				nextp +=float3(0,0,_Time[1]*100) ;
-				
-				float f = _FValue;
-				float a = _AValue;
-				float maxA;
-				for (int j = 0; j < 5; j++)
-				{
-					float fbm =(1-voronoi(nextp.xyz/f).x);
-					fbm *= 2.;
-					fbm -= 1.;
-					fbm *= a;
-					
-					voro += fbm;
-					f *= 2.4;
-					a *= 2.4; 
 		
-				}
-				voro = saturate(voro) ;
-
-				float4 src = saturate(voro);
-				src.rgb *= src.a;
-				dst = (1.0 - dst.a) * src + dst;
-
-				accumdist += saturate(voro);
-				//if (voro > 0.99)break;
-				
-				
-				
-			}
-			accumdist /= nstps*1.0;
-			
 			fragOutput Out;
 
-			Out.col = 1;//float4(accumdist, accumdist, accumdist, 1);
-			Out.col.a = dst;
+		
+#if  defined(NORMALS)
+			float3 N = estimateNormal(p, _Epsilon);
+			Out.col = float4(N, 1);
 			
-	
+#elif defined(CONVERGENCE)
+			float3 convergence = steps / _MaxMarchingSteps;
+			Out.col = float4(convergence, 1);
+#elif defined(DISTANCE)
+			float3 d = (dist-Near)/(Far-Near);
+			Out.col = float4(d, 1);
+#elif defined(LIGHTING)
+		
+			float3 L = _WorldSpaceLightPos0.xyz;
+			float3 percD = (dist - Near) / (Far - Near);
 
+			float3 N = estimateNormal(p, _Epsilon/(1-percD));
+			float lambert = pow(DotClamped(L, N) * 0.4 + 0.6, 80);
+			float3 viewDir = normalize(_WorldSpaceCameraPos - p);
+			float fresnel = clamp(1.0 - dot(N, viewDir), 0.0, 1.0);
+			fresnel = pow(fresnel, 4.9);
+			float3 reflectionDir = reflect(-L, N);
+			float4 envSample = UNITY_SAMPLE_TEXCUBE(unity_SpecCube0, N);
+			float3 specular = DecodeHDR(envSample, unity_SpecCube0_HDR).xyz;
+			
+			float3 refracted = _Sea_Base + lambert * _Sea_Water * 0.12;
+			Out.col = float4(lerp(refracted, specular, fresnel),1);
 
-			float4 projP = mul(UNITY_MATRIX_VP, float4(nextp.xyz, 1));
+			Out.col =  float4(lerp(refracted, specular, fresnel), 1);
+			Out.col.a = 1;
+			
+#else
+			if (IN.UV.x < 0.5*0.33) {
+				float3 N = estimateNormal(p, _Epsilon);
+				Out.col = float4(N, 1);
+			}
+			else if (IN.UV.x < 0.5*0.66) {
+				float3 convergence = steps / _MaxMarchingSteps;
+				Out.col = float4(convergence, 1);
+			}
+			else if (IN.UV.x < 0.5*0.99) {
+				float3 d = (dist - Near) / (Far - Near);
+				Out.col = float4(d, 1);
+			}
+			else {
+				float3 L = _WorldSpaceLightPos0.xyz;
+				float3 percD = (dist - Near) / (Far - Near);
+				float3 N = estimateNormal(p, _Epsilon / (1 - percD));
+				float lambert = pow(DotClamped(L, N) * 0.4 + 0.6, 80);
+				float3 viewDir = normalize(_WorldSpaceCameraPos - p);
+				float fresnel = clamp(1.0 - dot(N, viewDir), 0.0, 1.0);
+				fresnel = pow(fresnel, _AuxValue);
+				float3 reflectionDir = reflect(-L, N);
+				float4 envSample = UNITY_SAMPLE_TEXCUBE(unity_SpecCube0, N);
+				float3 specular = DecodeHDR(envSample, unity_SpecCube0_HDR).xyz;
+
+				float3 refracted = _Sea_Base + lambert * _Sea_Water * 0.12;
+				Out.col =  float4(lerp(refracted, specular, fresnel), 1);
+
+			}
+#endif
+			
+
+			
+			float4 projP = mul(UNITY_MATRIX_VP, float4(p.xyz, 1));
 			float depth = projP.z / projP.w;
 
 #if defined(UNITY_REVERSED_Z)
@@ -202,16 +205,10 @@ Shader "RayMarching/FSQ_Volume" {
 #else
 			Out.depth = 1-depth	;
 #endif
-
-			//Out.col = dist/Far;
-			//Out.col.a = 1;
 			return Out;
 		
 		}
 
-
-
-		
 		ENDCG
 
 		}

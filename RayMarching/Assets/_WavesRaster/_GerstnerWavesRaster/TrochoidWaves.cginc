@@ -1,4 +1,4 @@
-﻿
+﻿#include "Assets/_CGIncludes/NoiseUtility.cginc"
 #define PI 3.141592653589793238462
 #define PI2 6.283185307179586476924
 
@@ -13,7 +13,7 @@ struct wave {
 StructuredBuffer<wave> waveBuffer;
 
 uniform int _NumWaves;
-float _NoiseAmplitude=10;
+uniform float _NoiseAmplitude = 10.0;
 uniform float _Angle;
 uniform float _sAmplitude;
 uniform float _cAmplitude;
@@ -22,76 +22,9 @@ float getAbsWavePosition(float2 gridPosition, int waveNumber);
 //float getAbsWavePosition(float2 gridPosition);
 
 
-float hash(float2 p) {
-	float h = dot(p, float2(127.1, 311.7));
-	return frac(sin(h)*43758.5453123);
-}
-
-float hash(float3 p)  // replace this by something better
-{
-	p = frac(p*0.3183099 + .1);
-	p *= 17.0;
-	return frac(p.x*p.y*p.z*(p.x + p.y + p.z));
-}
 
 
-float noise(in float3 x)
-{
-	float3 p = floor(x);
-	float3 f = frac(x);
-	f = f*f*(3.0 - 2.0*f);
 
-	return lerp(lerp(lerp(hash(p + float3(0, 0, 0)),
-		hash(p + float3(1, 0, 0)), f.x),
-		lerp(hash(p + float3(0, 1, 0)),
-			hash(p + float3(1, 1, 0)), f.x), f.y),
-		lerp(lerp(hash(p + float3(0, 0, 1)),
-			hash(p + float3(1, 0, 1)), f.x),
-			lerp(hash(p + float3(0, 1, 1)),
-				hash(p + float3(1, 1, 1)), f.x), f.y), f.z);
-}
-float PerlinNoise(in float2 p) {
-	float2 i = floor(p);
-	float2 f = frac(p);
-	float2 u = smoothstep(float2(0,0),float2(1,1),f);
-	return -1.0 + 2.0*lerp(
-		lerp(hash(i + float2(0.0, 0.0)),
-			hash(i + float2(1.0, 0.0)),
-			u.x),
-		lerp(hash(i + float2(0.0, 1.0)),
-			hash(i + float2(1.0, 1.0)),
-			u.x),
-		u.y);
-}
-
-float3 voronoi(in float3 x)
-{
-	float3 p = floor(x);
-	float3 f = frac(x);
-
-	float id = 0.0;
-	float2 res = float2(100.0,100.0);
-	for (int k = -1; k <= 1; k++)
-		for (int j = -1; j <= 1; j++)
-			for (int i = -1; i <= 1; i++)
-			{
-				float3 b = float3(float(i), float(j), float(k));
-				float3 r = float3(b) - f + hash(p + b);
-				float d = dot(r, r);
-
-				if (d < res.x)
-				{
-					id = dot(p + b, float3(1.0, 57.0, 113.0));
-					res = float2(d, res.x);
-				}
-				else if (d < res.y)
-				{
-					res.y = d;
-				}
-			}
-
-	return float3(sqrt(res), abs(id));
-}
 
 float F_z(float3 p) {
 	float finalPosition = 0;
@@ -103,6 +36,7 @@ float F_z(float3 p) {
 		
 	}
 	finalPosition /= _NumWaves;
+
 	return finalPosition;
 }
 

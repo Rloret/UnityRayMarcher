@@ -14,8 +14,9 @@ public enum DebugRender
 public class FullScreenQuadGUI : ShaderGUI {
 
 
-   [Space] public RaymarchType RaymarchAlgorithm;
-   [Space] public DebugRender DebugType;
+   [Space] public RaymarchType RaymarchAlgorithm = RaymarchType.VANILLA_RAYMARCH;
+   [Space] public DebugRender DebugType = DebugRender.LIGHTING;
+
     public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
     {
         Material targetMat = materialEditor.target as Material;

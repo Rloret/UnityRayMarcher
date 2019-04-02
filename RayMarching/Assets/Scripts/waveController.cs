@@ -15,6 +15,7 @@ public class waveController : MonoBehaviour {
     public float _DirectionSpan;
     public float _Steepness;
 
+    public float _NoiseAmplitude=10.0f;
 
     #endregion PublicVariables
 
@@ -33,9 +34,8 @@ public class waveController : MonoBehaviour {
             Angle += random;
         }
     };
-    [Space]
-    [Space]
-    [Tooltip("This struct holds the basic information about a wave its amplitude(height), Wavelength(width) and speed")]
+
+    [Space,Space,Tooltip("This struct holds the basic information about a wave its amplitude(height), Wavelength(width) and speed")]
     public Wave[] _Waves;
 
     #region PrivateVariables
@@ -60,13 +60,13 @@ public class waveController : MonoBehaviour {
     {
         Init();
      }
-    void Update()
+
+    private void Update()
     {
-        //TODO: Overkill, change to GUI update or make a custom inspector.
-       // UpdateWavesInShader();
+        UpdateWavesInShader();
     }
 
-   private void OnValidate()
+    private void OnValidate()
    {
     if(waveBuffer!=null)   UpdateWavesInShader();
    }
@@ -80,6 +80,7 @@ public class waveController : MonoBehaviour {
 
         Trochoid.SetInt("_NumWaves", _Waves.Length);
         Trochoid.SetFloat("_Steepness", _Steepness);
+        Trochoid.SetFloat("_NoiseAmplitude", _NoiseAmplitude);
     }
 
     void OnDestroy()
